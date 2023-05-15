@@ -18,11 +18,11 @@ def generate_csv():
             trimmed_line = line.strip()
             if trimmed_line.endswith(":"):
                 this_movie_id = int(trimmed_line[:-1])
-                ratings[this_movie_id] = []
+                ratings[this_movie_id] = {}
             else:
                 data = trimmed_line.split(",")
                 user_id, rating = int(data[0]), int(data[1])
-                ratings[this_movie_id].append((user_id, rating))
+                ratings[this_movie_id][user_id] = rating
                 user_ids.add(user_id)
             if len(ratings.keys()) > NUM_MOVIES:
                 break
@@ -30,7 +30,7 @@ def generate_csv():
             continue
         break
     
-    print(len(user_ids))
+    inverted = {:}
 
 
 if __name__ == "__main__":
