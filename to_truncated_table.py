@@ -29,9 +29,13 @@ def generate_csv():
         else:
             continue
         break
-    
-    inverted = {:}
 
+    index_col = sorted(list(user_ids))
+    data = pl.DataFrame({"user_id": pl.Series(index_col)})
+    for movie, movie_ratings in ratings.items():
+        new_col = [movie_ratings.get(user_id, None) for user_id in index_col]
+        data = data.with_columns(pl.Series(name=str(movie), values=new_col))
+    data.write_csv(DATA / "table.csv")
 
 if __name__ == "__main__":
     generate_csv()
