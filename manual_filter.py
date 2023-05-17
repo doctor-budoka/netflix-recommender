@@ -1,4 +1,4 @@
-from numpy import random
+from numpy.random import uniform
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -15,6 +15,8 @@ class DataIndex:
         self.ratings = {}
         self.movie_users = {}
         self.user_movies = {}
+        self._users = None
+        self._movies = None
         self._num_users = None
         self._num_movies = None
         self._num_ratings = None
@@ -58,12 +60,26 @@ class DataIndex:
         if self._num_ratings is None:
             self._num_ratings = len(self.ratings.keys())
         return self._num_ratings
+    
+    @property
+    def users(self):
+        if self._users is None:
+            self._users = set(self.user_movies.keys())
+        return self._users
+    
+    @property
+    def movies(self):
+        if self._movies is None:
+            self._movies = set(self.movie_users.keys())
+        return self._movies
+
 
 
 def main():
     data = load_data()
-    print(data.num_users, data.num_movies, data.num_ratings)
-    # user_params, movie_params = initialise_params(data)
+    print("Data loaded")
+    user_params, movie_params = initialise_params(data)
+
     # current_cost = cost(data, user_params, movie_params)
     # while True:
     #     user_params, movie_params = update(data, user_params, movie_params)
@@ -99,8 +115,10 @@ def load_data():
 
 
 
-def initialise_params(users, movies):
-    return {x: [0, 0, 0] for x in users}, {x: [0, 0, 0] for x in movies}
+def initialise_params(data: DataIndex):
+    user_init = uniform(low=-1, high=1, size=(data.num_users, NUM_PARAMS + 1))
+    movie_init = uniform(low=-1, high=1, size=(data.num_movies, NUM_PARAMS))
+    return {x: row for x, row in zip(data.users, user_init)}, {x: row for x, row in zip(data.movies, movie_init)}
 
 
 def cost(ratings, user_params, movie_params):
