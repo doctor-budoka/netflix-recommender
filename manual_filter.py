@@ -1,4 +1,5 @@
 from numpy.random import uniform
+import numpy as np
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -7,6 +8,7 @@ NUM_MOVIES = 100
 
 NUM_PARAMS = 3
 LEARNING_RATE = 0.1
+REGULARISATION = 0.1
 EPSILON = 0.1
 
 
@@ -79,8 +81,11 @@ def main():
     data = load_data()
     print("Data loaded")
     user_params, movie_params = initialise_params(data)
+    print("Parameters initialised")
 
-    # current_cost = cost(data, user_params, movie_params)
+    current_cost = cost(data, user_params, movie_params)
+    print(current_cost)
+
     # while True:
     #     user_params, movie_params = update(data, user_params, movie_params)
     #     new_cost = cost(data, user_params, movie_params)
@@ -117,14 +122,31 @@ def load_data():
 
 def initialise_params(data: DataIndex):
     user_init = uniform(low=-1, high=1, size=(data.num_users, NUM_PARAMS + 1))
-    movie_init = uniform(low=-1, high=1, size=(data.num_movies, NUM_PARAMS))
-    return {x: row for x, row in zip(data.users, user_init)}, {x: row for x, row in zip(data.movies, movie_init)}
+    user_params = {x: row for x, row in zip(data.users, user_init)}
+
+    movie_init = np.append(uniform(low=-1, high=1, size=(data.num_movies, NUM_PARAMS)), np.ones((data.num_movies, 1)), axis=1)
+    movie_params = {x: row for x, row in zip(data.movies, movie_init)}
+    return user_params, movie_params
 
 
-def cost(ratings, user_params, movie_params):
-    return 0
+def cost(data: DataIndex, user_params, movie_params, reg=REGULARISATION):
+    pure_cost = calculate_pure_cost(data, user_params, movie_params)
+    regularisation_term = calculate_regularisation_terms(user_params, movie_params, reg=reg)
+    return pure_cost + regularisation_term
 
-def update(ratings,user_params, movie_params):
+def calculate_pure_cost(data: DataIndex, user_params, movie_params):
+    errors = [
+        (np.dot(user_params[user], movie_params[movie]) - rating)**2
+        for (user, movie), rating in data.ratings.items()
+    ]
+    return 0.5 * sum(errors)
+
+def calculate_regularisation_terms(user_params, movie_params, reg=REGULARISATION):
+    user_reg = sum([np.dot(params, params) for params in user_params.values()])
+    movie_reg = sum([np.dot(params, params) for params in movie_params.values()])
+    return 0.5 * reg * (user_reg + movie_reg)
+
+def update(ratings, user_params, movie_params):
     return user_params,  movie_params
 
 def dcdb(j, ratings, user_params, movie_params):
