@@ -1,6 +1,7 @@
 from numpy.random import uniform
 import numpy as np
 from pathlib import Path
+import pandas as pd
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
@@ -96,6 +97,10 @@ def main():
             break
         current_cost = new_cost
         print(current_cost)
+    print("Training done. Saving params...")
+    pd.DataFrame.from_dict(user_params, orient="index", columns=[f"w_{i}" for i in range(NUM_PARAMS)] + ["bias"]).to_csv(ROOT / "user_params.csv", index=False)
+    pd.DataFrame.from_dict(movie_params, orient="index", columns=[f"x_{i}" for i in range(NUM_PARAMS)] + ["bias"]).to_csv(ROOT / "movie_params.csv", index=False)
+
 
 
 def load_data():
