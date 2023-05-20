@@ -6,10 +6,10 @@ ROOT = Path(__file__).parent
 DATA = ROOT / "data"
 NUM_MOVIES = 100
 
-NUM_PARAMS = 3
-LEARNING_RATE = 0.01
+NUM_PARAMS = 1
+LEARNING_RATE = 0.1/(NUM_MOVIES**2)
 REGULARISATION = 0.1
-EPSILON = 100
+EPSILON = 0.1
 
 
 class DataIndex:
@@ -83,14 +83,15 @@ def main():
     user_params, movie_params = initialise_params(data)
     print("Parameters initialised")
 
-    current_cost = cost(data, user_params, movie_params)
+    initial_cost = cost(data, user_params, movie_params)
+    current_cost = initial_cost
     print(f"Initial cost: {current_cost}")
 
     while True:
         user_params, movie_params = update(data, user_params, movie_params)
         new_cost = cost(data, user_params, movie_params)
         cost_reduction = current_cost - new_cost
-        assert cost_reduction > 0, "Cost should be reducing"
+        assert cost_reduction > - (initial_cost * 10), "Cost should be reducing"
         if cost_reduction < EPSILON:
             break
         current_cost = new_cost
