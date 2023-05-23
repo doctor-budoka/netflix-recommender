@@ -5,7 +5,7 @@ import pandas as pd
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
-NUM_MOVIES = 100
+NUM_MOVIES = 50
 
 NUM_PARAMS = 3
 LEARNING_RATE = 0.1/(NUM_MOVIES**2)
@@ -23,6 +23,7 @@ class DataIndex:
         self._num_users = None
         self._num_movies = None
         self._num_ratings = None
+        self.ratings_mean = None
     
     def add_rating(self, user, movie, rating):
         self.ratings[(user, movie)] = rating
@@ -76,6 +77,20 @@ class DataIndex:
             self._movies = set(self.movie_users.keys())
         return self._movies
 
+    def normalise(self):
+        self.ratings_mean = sum(self.ratings.values())/len(self.ratings.values())
+        self.translate_ratings(-self.ratings_mean)
+        return self
+
+    def denormalise(self):
+        if self.ratings_mean is None:
+            raise ValueError("Can't denormalise because the data hasn't been normalised")
+        self.translate_ratings(self.ratings_mean)
+        return self
+    
+    def translate_ratings(self, distance):
+        for key, value in self.ratings.items():
+            self.ratings[key] = value - distance
 
 
 def main():
@@ -125,9 +140,7 @@ def load_data():
         else:
             continue
         break
-    return data
-
-
+    return data.normalise()
 
 def initialise_params(data: DataIndex):
     user_init = uniform(low=-1, high=1, size=(data.num_users, NUM_PARAMS + 1))
