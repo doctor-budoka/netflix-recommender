@@ -10,7 +10,7 @@ NUM_MOVIES = 50
 NUM_PARAMS = 3
 LEARNING_RATE = 0.1/(NUM_MOVIES**2)
 REGULARISATION = 0.1
-EPSILON = 0.1
+EPSILON = 1.0
 
 
 class DataIndex:
@@ -115,6 +115,8 @@ def main():
     print("Training done. Saving params...")
     pd.DataFrame.from_dict(user_params, orient="index", columns=[f"w_{i}" for i in range(NUM_PARAMS)] + ["bias"]).to_csv(ROOT / "user_params.csv", index=False)
     pd.DataFrame.from_dict(movie_params, orient="index", columns=[f"x_{i}" for i in range(NUM_PARAMS)] + ["bias"]).to_csv(ROOT / "movie_params.csv", index=False)
+    with open("mean.txt", "w") as f:
+        f.write(str(data.ratings_mean))
 
 
 
