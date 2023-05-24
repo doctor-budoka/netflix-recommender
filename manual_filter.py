@@ -1,11 +1,7 @@
 from numpy.random import uniform
 import numpy as np
-from pathlib import Path
-import pandas as pd
-from utils.data_index import DataIndex
+from utils import DataIndex, load_data, save_params
 
-ROOT = Path(__file__).parent
-DATA = ROOT / "data"
 NUM_MOVIES = 10
 
 NUM_PARAMS = 3
@@ -15,7 +11,7 @@ EPSILON = 1.0
 
 
 def main():
-    data = load_data()
+    data = load_data(NUM_MOVIES)
     print("Data loaded")
     user_params, movie_params = initialise_params(data)
     print("Parameters initialised")
@@ -34,36 +30,8 @@ def main():
         current_cost = new_cost
         print(current_cost)
     print("Training done. Saving params...")
-    pd.DataFrame.from_dict(user_params, orient="index", columns=[f"w_{i}" for i in range(NUM_PARAMS)] + ["bias"]).to_csv(ROOT / "user_params.csv", index=False)
-    pd.DataFrame.from_dict(movie_params, orient="index", columns=[f"x_{i}" for i in range(NUM_PARAMS)] + ["bias"]).to_csv(ROOT / "movie_params.csv", index=False)
-    with open("mean.txt", "w") as f:
-        f.write(str(data.ratings_mean))
+    save_params(data.ratings_mean, user_params, movie_params)
 
-
-
-def load_data():
-    data = DataIndex()
-    src_files = sorted([x for x in DATA.iterdir() if x.name.startswith("combined_data")])
-    current_movie_id = None
-    num_movies = 0
-    for file in src_files:
-        with open(file, "r") as in_f:
-            in_lines = in_f.readlines()
-        for line in in_lines:
-            trimmed_line = line.strip()
-            if trimmed_line.endswith(":"):
-                current_movie_id = int(trimmed_line[:-1])
-                num_movies += 1
-            else:
-                info = trimmed_line.split(",")
-                user_id, rating = int(info[0]), int(info[1])
-                data.add_rating(user_id, current_movie_id, rating)
-            if num_movies > NUM_MOVIES:
-                break
-        else:
-            continue
-        break
-    return data.normalise()
 
 def initialise_params(data: DataIndex):
     user_init = uniform(low=-1, high=1, size=(data.num_users, NUM_PARAMS + 1))
