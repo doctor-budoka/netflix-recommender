@@ -1,13 +1,14 @@
 from numpy.random import uniform
 import numpy as np
-from utils import DataIndex, load_data, save_params
+from utils import DataIndex, load_data, save_params, Updater
 
-NUM_MOVIES = 10
+NUM_MOVIES = 50
 
 NUM_PARAMS = 3
-LEARNING_RATE = 0.1/(NUM_MOVIES**2)
+LEARNING_RATE = 0.00004
 REGULARISATION = 0.1
 EPSILON = 1.0
+MOMENTUM = 0.7
 
 
 def main():
@@ -20,8 +21,9 @@ def main():
     current_cost = initial_cost
     print(f"Initial cost: {current_cost}")
 
+    updater = Updater(LEARNING_RATE, MOMENTUM, REGULARISATION, NUM_PARAMS)
     while True:
-        user_params, movie_params = update(data, user_params, movie_params)
+        user_params, movie_params = updater.update(data, user_params, movie_params)
         new_cost = cost(data, user_params, movie_params)
         cost_reduction = current_cost - new_cost
         assert cost_reduction > - (initial_cost * 10), "Cost should be reducing"
@@ -58,44 +60,6 @@ def calculate_regularisation_terms(user_params, movie_params, reg=REGULARISATION
     user_reg = sum([np.dot(params, params) for params in user_params.values()])
     movie_reg = sum([np.dot(params, params) for params in movie_params.values()])
     return 0.5 * reg * (user_reg + movie_reg)
-
-def update(data, user_params, movie_params):
-    new_user_params = update_user_params(data, user_params, movie_params)
-    new_movie_params = update_movie_params(data, user_params, movie_params)
-    return new_user_params,  new_movie_params
-
-
-def update_user_params(data, user_params, movie_params):
-    return {
-        user: current_params - LEARNING_RATE * user_jacobian(data, user, current_params, movie_params)
-        for user, current_params in user_params.items()
-    }
-
-
-def user_jacobian(data, user, current_params, movie_params, reg=REGULARISATION):
-    diff = sum([
-        (np.dot(current_params, movie_params[movie]) - data.ratings[(user, movie)]) * movie_params[movie]
-        for movie in data.user_movies[user]
-    ])
-    reg_diff = reg * current_params
-    return diff + reg_diff
-
-
-def update_movie_params(data, user_params, movie_params):
-    return {
-        movie: current_params - LEARNING_RATE * movie_jacobian(data, movie, current_params, user_params)
-        for movie, current_params in movie_params.items()
-    }
-
-
-def movie_jacobian(data, movie, current_params, user_params, reg=REGULARISATION):
-    zero_bias_change = np.array([1]*NUM_PARAMS + [0])
-    diff = sum([
-        (np.dot(current_params, user_params[user]) - data.ratings[(user, movie)]) * (user_params[user] * zero_bias_change)
-        for user in data.movie_users[movie]
-    ])
-    reg_diff = reg * current_params
-    return diff + reg_diff
 
 
 if __name__ == "__main__":
